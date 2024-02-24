@@ -7,29 +7,35 @@ export class TranslateService {
     obj: Record<string, any>,
     lang: string,
   ): Promise<Record<string, any>> {
-    const keys = Object.keys(obj);
-    const translatedObj: Record<string, any> = {};
+    const resultObj = { ...obj };
 
-    for (const key of keys) {
-      if (typeof obj[key] === 'string') {
-        translatedObj[key] = await this.TranslateText(obj[key], lang);
-      } else {
-        translatedObj[key] = obj[key];
+    if (
+      resultObj.translateContent &&
+      typeof resultObj.translateContent === 'object'
+    ) {
+      const keys = Object.keys(resultObj.translateContent);
+
+      for (const key of keys) {
+        if (typeof resultObj.translateContent[key] === 'string') {
+          resultObj.translateContent[key] = await this.TranslateText(
+            resultObj.translateContent[key],
+            lang,
+          );
+        }
       }
     }
 
-    return translatedObj;
+    return resultObj;
   }
 
-  async TranslateText(text: string, lang) {
-    let translatedText = '';
-    await translate(text, { to: lang })
-      .then((res) => {
-        translatedText = res.text;
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-    return translatedText;
+  async TranslateText(text: string, lang: string): Promise<string> {
+    try {
+      const res = await translate(text, { to: lang });
+      return res.text;
+    } catch (err) {
+      console.error(err);
+      // В случае ошибки возвращаем исходный текст или сообщение об ошибке
+      return text;
+    }
   }
 }
